@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
 ////////////////////////////////////////////
     //WIFI_half.start(wifi_halfcode);
     //wifi = WiFiInterface::get_default_instance();
-    /*if (!wifi) {
+    if (!wifi) {
             printf("ERROR: No WiFiInterface found.\r\n");
             return -1;
     }
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
     mqttNetwork.disconnect();
     printf("Successfully closed!\n");
     return 0;
-*/
+
 }
 
 
