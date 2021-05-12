@@ -19,7 +19,7 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
-
+int seq[10];
 //DigitalOut myled(LED3);
 RpcDigitalOut myled1(LED1, "myled1"); // for gesture indicate
 RpcDigitalOut myled2(LED2, "myled2"); // for detection indicate
@@ -63,7 +63,7 @@ void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
     MQTT::Message message;
     char buff[100];
 
-    sprintf(buff, "%02d", countcount);
+    sprintf(buff, "%02d %d%d%d%d%d%d%d%d%d%d", countcount, seq[0], seq[1], seq[2], seq[3], seq[4], seq[5], seq[6], seq[7], seq[8], seq[9]);
 
     message.qos = MQTT::QOS0;
     message.retained = false;
@@ -239,29 +239,34 @@ void angle_mode()
     double_t lengtha;
     //double_t lengthb;
     double_t dot;
-    int i = 0;
-    confirmmmm = angle[f];
-    /*while(1) {
-        //BSP_ACCELERO_AccGetXYZ(ppDataXYZ);
-        if (i < )
-        mDataXYZ[0] = ppDataXYZ[0]/1024.0;
-        mDataXYZ[1] = ppDataXYZ[1]/1024.0;
-        mDataXYZ[2] = ppDataXYZ[2]/1024.0;
-        dot = mDataXYZ[0] * refXYZ[0] + mDataXYZ[1] * refXYZ[1] + mDataXYZ[2] * refXYZ[2];
-        lengtha = sqrt(mDataXYZ[0] * mDataXYZ[0] + mDataXYZ[1] * mDataXYZ[1] + mDataXYZ[2] * mDataXYZ[2]);
-        if (lengtha < 0) lengtha = -lengtha;
-        theta = acos(dot/lengtha/lengthr)/3.14*180;
-        if (theta > confirmmmm) {
-            ////////////////////////////////////////////mqtt
-            check = 2;
-            countcount++;
-            if (countcount <= 10) angle_mqtt.attach(mqtt_queue.event(&publish_message, &client), 2ms);
-            
+    int i = 0, j = 0, k = 0;
+    int seq[10];
+    uint8_t XYZ[30];
+    confirmmmm = 30;
+    while(1) {
+        for (i = 0; i < 30; i++) {
+            XYZ[i] = tensor_arena[i];
         }
-        uLCD.cls();
-        uLCD.printf("\n%f\n", theta);
-        ThisThread::sleep_for(100ms);
-    }*/
+        while (j + 2 < 30) {
+            ppDataXYZ[0] = XYZ[j];
+            ppDataXYZ[1] = XYZ[j + 1];
+            ppDataXYZ[2] = XYZ[j + 2];
+            mDataXYZ[0] = ppDataXYZ[0]/1024.0;
+            mDataXYZ[1] = ppDataXYZ[1]/1024.0;
+            mDataXYZ[2] = ppDataXYZ[2]/1024.0;
+            dot = mDataXYZ[0] * refXYZ[0] + mDataXYZ[1] * refXYZ[1] + mDataXYZ[2] * refXYZ[2];
+            lengtha = sqrt(mDataXYZ[0] * mDataXYZ[0] + mDataXYZ[1] * mDataXYZ[1] + mDataXYZ[2] * mDataXYZ[2]);
+            if (lengtha < 0) lengtha = -lengtha;
+            theta = acos(dot/lengtha/lengthr)/3.14*180;
+            if (theta > confirmmmm) {
+                seq[k] = 1;
+            } else {
+                seq[k] = 0;
+            }
+            j += 3;
+            k += 1;
+        }
+    }
 }
 
 void ACC_mode()
@@ -271,7 +276,13 @@ void ACC_mode()
 
     // The gesture index of the prediction
     int gesture_index;
-    
+    double_t mDataXYZ[3] = {0};
+    double_t lengtha;
+    //double_t lengthb;
+    double_t dot;
+    int i = 0, j = 0, k = 0;
+    uint8_t XYZ[30];
+    confirmmmm = 30;
     
     // Set up logging.
     static tflite::MicroErrorReporter micro_error_reporter;
@@ -334,7 +345,7 @@ void ACC_mode()
         return -1;
     }
     
-    anglethread.start(angle_mode);
+    //anglethread.start(angle_mode);
     //error_reporter->Report("Set up successful...\n");
     while (true) {
         // Attempt to read new data from the accelerometer
@@ -366,6 +377,30 @@ void ACC_mode()
         //error_reporter->Report(config.output_message[gesture_index]);
         //}
         countcount++;
+        for (i = 0; i < 30; i++) {
+            XYZ[i] = tensor_arena[i];
+        }
+        k = 0;
+        j = 0;
+        while (j + 2 < 30) {
+            ppDataXYZ[0] = XYZ[j];
+            ppDataXYZ[1] = XYZ[j + 1];
+            ppDataXYZ[2] = XYZ[j + 2];
+            mDataXYZ[0] = ppDataXYZ[0]/1024.0;
+            mDataXYZ[1] = ppDataXYZ[1]/1024.0;
+            mDataXYZ[2] = ppDataXYZ[2]/1024.0;
+            dot = mDataXYZ[0] * refXYZ[0] + mDataXYZ[1] * refXYZ[1] + mDataXYZ[2] * refXYZ[2];
+            lengtha = sqrt(mDataXYZ[0] * mDataXYZ[0] + mDataXYZ[1] * mDataXYZ[1] + mDataXYZ[2] * mDataXYZ[2]);
+            if (lengtha < 0) lengtha = -lengtha;
+            theta = acos(dot/lengtha/lengthr)/3.14*180;
+            if (theta > confirmmmm) {
+                seq[k] = 1;
+            } else {
+                seq[k] = 0;
+            }
+            j += 3;
+            k += 1;
+        }
         angle_mqtt.attach(mqtt_queue.event(&publish_message, &client), 2ms);
         if (gesture_index == 0) {
             uLCD.cls();
